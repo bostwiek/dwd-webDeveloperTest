@@ -29,7 +29,9 @@
     <div v-if="showScore">
       <button @click="restartQuiz()">Restart</button>
       <br>
-      <h3>Score: {{ score }} / {{ quizQuestions.length }} </h3>
+      <h3>Total Score: {{ score }} / {{ quizQuestions.length }} </h3>
+			<h3 v-if="score < 7">Too bad, better luck next time!</h3>
+			<h3 v-if="score > 6">Better than most!</h3>
     </div>
 		
   </div>
@@ -37,8 +39,6 @@
 </template>
 
 <script>
-
-// LEFT OFF HERE: https://auth0.com/blog/how-to-make-secure-http-requests-with-vue-and-express/
 
 export default {
 
@@ -65,7 +65,14 @@ export default {
 			this.loadQuestions();
 		},
 
-    selectResponse(item) {
+    async selectResponse(item) {
+			try {
+				let response = await fetch('http://localhost:9000?answer='+item.text);
+				console.log(response)
+			} catch {
+				console.error
+			}
+      if(item.correct && !this.select) this.score++;
 			this.select = true;
 			// if(item.correct == true) alert("yas queen")
 			// try {
@@ -74,7 +81,6 @@ export default {
 			// 	console.log(err)
 			// }
 			// server needs to validate this...
-      if(item.correct) this.score++;
     },
     
     check(status) {
@@ -110,7 +116,6 @@ export default {
 				}
 
 			}
-			console.log(this.quizQuestions);
 		},
 
 		randomizeQuestions(arr) {
@@ -146,16 +151,14 @@ export default {
 
 		async loadQuestions() {
 			try {
-				let response = await fetch('/test.json');
-				console.log(response);
+				let response = await fetch('http://localhost:9000/test.json');
 				let questions = await response.json();
-				console.log(questions);
 				this.quizQuestions = this.randomizeQuestions(questions.questions);
 				this.randomizeAnswers();
 			} catch(err) {
 				console.log(err)
 			}
-		}
+		},
 
   }
 }
