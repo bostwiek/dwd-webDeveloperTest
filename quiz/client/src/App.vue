@@ -1,49 +1,36 @@
 <template>
+	<div class="app-container">
 
-  <div class="app-container">
+		<h1>Video Game Quiz</h1>
 
-    <h1>Video Game Quiz</h1>
-
-    <div v-for="(element, index) in quizQuestions.slice(currentQ, nextQ)" :key="index" v-show="quiz">
-      <div class="qa-container">
-				<h3>
+		<div v-for="(element, index) in quizQuestions.slice(currentQ, nextQ)" :key="index" v-show="quiz">
+			<div class="qa-container">
+				<h3 style="margin-bottom: 40px">
 					Question {{ nextQ }} / {{ quizQuestions.length }}
 				</h3>
-				<h3>
+				<h3 style="margin-bottom: 40px">
 					{{ element.question }}
 				</h3>
-				<br>
 				<ul>
-					<li v-for="(item, index) in element.answer" :key="index" :class="select ? check(item) : 'unknown'" @click="selectResponse(item)">
+					<li v-for="(item, index) in element.answer" :key="index" @click="selectResponse(item)">
 						{{ element.answer[index].text }}
 					</li>
 				</ul>
 			</div>
-			<br>
 			<button @click="nextQuestion">Next</button>
-			<br>
-    </div>
+		</div>
 
-    <div> <!--  v-if="showScore" -->
-      <br>
-      <h2>Total Score: {{ score }} / {{ quizQuestions.length }} </h2>
-			<h4 v-if="score < 6">Better luck next time!</h4>
-			<h4 v-if="score > 5">Not bad!</h4>
-			<br>
-      <button @click="restartQuiz()">Restart</button>
-    </div>
-		
-		<div v-if="!quizStarted">
-			<br>
-			<br>
-			<br>
-			<br>
-			<button @click="startQuiz">Start Quiz</button>
-			<br>
+		<div v-if="showScore">
+			<h2 style="margin-bottom: 40px">Total Score: {{ score }} / {{ quizQuestions.length }} </h2>
+			<h4 style="margin-bottom: 60px"> {{ iJudgeYou }} </h4>
+			<button @click="restartQuiz()">Restart</button>
 		</div>
 		
-  </div>
+		<div v-if="!quizStarted" style="margin-top: 100px">
+			<button @click="startQuiz" style="font-size: 1.6em">Start Quiz</button>
+		</div>
 
+	</div>
 </template>
 
 <script>
@@ -51,82 +38,106 @@
 export default {
 
 	name: 'Quiz',
-  components: {
-	},
-	
-  data() {
-    return {
-      score: 0,
-      currentQ: 0,
+
+	data() {
+		return {
+			score: 0,
+			currentQ: 0,
 			nextQ: 1,
-			checkingAnswer: 0,
-      select: false,
+			select: false,
 			showScore: false,
 			quizStarted: false,
-      quiz: true,
+			quiz: true,
 			quizQuestions: [],
-			apiResponse: ''
-    }
+			iJudgeYou: ''
+		}
 	},
 	
-  methods: {
+	methods: {
 
 		startQuiz() {
 			this.loadQuestions();
 			this.quizStarted = true;
 		},
 
-    async selectResponse(item) {
+		// this fires whenever a potential answer is selected
+		async selectResponse(item) {
 			if(!this.select) {
+				this.select = true;
 				try {
+					// throws a request to quiz/server, and checks if the name clicked matches any of the server's keys
 					const response = await fetch('http://localhost:8000/' + item.text);
 					const data = response.json();
-					if(data.then( arr => { this.checkingAnswer = arr.length } ) <= 1) alert('wow')
-					
+					data.then( arr => { arr.length > 0 ? this.addScore(item, 1) : this.addScore(item, 0) });
 				} catch {
 					console.error
 				}
-				// server ideally returns "item [ is / is not ] correct"
 			}
-			
-				// server needs to validate this...
-      if(item.correct && !this.select) ;
-			this.select = true;
-			
-    },
-    
-    check(status) {
-			// literally checks if the object clicked has the value "correct"
-				// ideally, backend would handle this & replace this function
-      return status.correct ? true : false
-    },
+		},
+		
+		addScore(item, n) {
+			// if n = 1, answer selected earlier was correct
+			if(n > 0) {
+				this.score++;
+			}
+			this.animateButtons(item);
+		},
 
-    nextQuestion() {
-      if(this.quizQuestions.length - 1 == this.currentQ) {
-        this.showScore = true;
-        this.quiz = false;
-      } else {
-        this.currentQ++;
-        this.nextQ++;
-        this.select = false;
-      }
+		animateButtons(item) {
+			// this is terrible code, but had trouble getting styling reading from server call :(
+			let liArr = document.querySelectorAll("li");
+			liArr.forEach((e, i) => {
+				if(item.correct == true && liArr[i].innerText == item.text) {
+					liArr[i].classList.add("correct")
+				} else {
+					liArr[i].classList.add("incorrect")
+				}				
+			});
+		},
+
+		clearButtons() {
+			let liArr = document.querySelectorAll("li");
+			liArr.forEach((e, i) => {
+				liArr[i].classList.remove("correct")
+				liArr[i].classList.remove("incorrect")
+			});
+		},
+
+		nextQuestion() {
+			if(this.quizQuestions.length - 1 == this.currentQ) {
+				// reached end of quiz here
+					// tally up score and assign appropriate response
+						if(this.score >= 12) { this.iJudgeYou = scoreResponse[0] }
+							else if (this.score > 10) { this.iJudgeYou = scoreResponse[1] }
+							else if (this.score > 6 ) { this.iJudgeYou = scoreResponse[2] }
+							else if (this.score > 0 ) { this.iJudgeYou = scoreResponse[3] }
+							else { this.iJudgeYou = scoreResponse[4] }
+				this.showScore = true;
+				this.quiz = false;
+			} else {
+				// the show must go on
+				this.currentQ++;
+				this.nextQ++;
+				this.clearButtons();
+				this.select = false;
+			}
 		},
 
 		randomizeAnswers() {
+			// I reuse the shuffle function from the card game a lot
 			const arrLength = this.quizQuestions.length;
 			for(let i = 0; i < arrLength; i++) {
-
 				for(let n = 0; n < 8; n++) {
 					let posA = Math.floor(Math.random() * 4),
 							posB = Math.floor(Math.random() * 4),
 							tempPos = this.quizQuestions[i].answer[posA];
-						// continously generate a new posB until it does not match
-						while(posA == posB) {
-							posB = Math.floor(Math.random() * 4)
-						}
-						// and switch
-						this.quizQuestions[i].answer[posA] = this.quizQuestions[i].answer[posB];
-						this.quizQuestions[i].answer[posB] = tempPos;
+					// continously generate a new posB until it does not match
+					while(posA == posB) {
+						posB = Math.floor(Math.random() * 4)
+					}
+					// and switch
+					this.quizQuestions[i].answer[posA] = this.quizQuestions[i].answer[posB];
+					this.quizQuestions[i].answer[posB] = tempPos;
 				}
 
 			}
@@ -159,14 +170,16 @@ export default {
 			return sortedArr;
 		},
 
-    restartQuiz() {
+		restartQuiz() {
+			// reset values to defaults
 			Object.assign(this.$data, this.$options.data());
 			this.quizStarted = false;
-    },
+		},
 
 		async loadQuestions() {
+			// this ideally would have been hosted on server, time constraints killed me in this section
 			try {
-				let response = await fetch('./test.json');
+				let response = await fetch('./questions.json');
 				let questions = await response.json();
 				this.quizQuestions = this.randomizeQuestions(questions.questions);
 				this.randomizeAnswers();
@@ -175,21 +188,28 @@ export default {
 			}
 		},
 
-  }
+	}
 }
+
+const scoreResponse = [
+								"Bravo! Now go get some exercise and sunlight, you must be starved of nutrients",
+								"So close! Probably a misclick, or bad netcode.",
+								"Well done.",
+								"At least you get a bronze trophy.",
+								"You blew it lol" ]
 
 </script>
 
 <style>
 
-  #app {
-    font-family: Avenir, Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-align: center;
-    color: #7aa1c9;
-    margin-top: 20px;
-  }
+	#app {
+		font-family: Avenir, Helvetica, Arial, sans-serif;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		text-align: center;
+		color: #7aa1c9;
+		margin-top: 20px;
+	}
 	.app-container {
 		display: grid;
 		grid-template-columns: repeat(1, 3fr);
@@ -199,39 +219,40 @@ export default {
 		margin: 0 auto;
 	}
 	.qa-container {
-		height: 330px;
+		height: 380px;
 	}
 	h1 {
 		color: #94b8dc;
 	}
-  ul {
-    list-style-type: none;
+	ul {
+		list-style-type: none;
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-  }
-  li {
-    margin: 5px;
-    padding: 20px;
+	}
+	li {
+		margin: 5px;
+		padding: 20px;
 		vertical-align: middle;
-    background: #13b921;
-    color: #fff;
-    border-radius: 5px;
-    transition: all 0.2s ease-in-out;
+		background-color: #466b8f;
+		color: #fff;
+		border-radius: 5px;
+		transition: all 0.2s ease-in-out;
 		user-select: none;
 	}
-  .unknown {
-    background-color: #466b8f;
-  }
-  .false {
-    background-color: #822424;
-  }
 	button {
-    color: #94b8dc;
+		color: #94b8dc;
 		background: #232527;
+		border: none;
 		padding: 10px 20px;
 		border-radius: 8px;
 		font-weight: bold;
 		font-size: 1.2em;
+	}
+	.incorrect {
+		background-color: #ac1414;
+	}
+	.correct {
+		background-color: #167c20;
 	}
 
 </style>
