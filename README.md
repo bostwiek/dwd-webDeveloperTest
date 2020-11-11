@@ -12,6 +12,7 @@ tie-breakers do exist and are accounted for
 **Start server:**
 ```
 cd quiz/server
+npm install
 npm start
 ```
 Server will begin hosting on http://localhost:8000
@@ -20,6 +21,7 @@ Server will begin hosting on http://localhost:8000
 **Start client:**
 ```
 cd quiz/client
+npm install
 npm run serve
 ```
 Client runs on http://localhost:8080
