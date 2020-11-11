@@ -7,14 +7,15 @@ var cors = require("cors");
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-var testAPIRouter = require("./routes/testAPI");
+var answerRouter = require("./routes/answer");
 
 var app = express();
 
+var port = process.env.PORT || 9000;
 const answerKey = [
-                    "1989", "Bioshock", "Gamecube", "Street Fighter",
-                    "Red", "Double Dragon", "16", "Link", "Saturn",
-                    "PlayStation", "Goldeneye", "Far Cry"
+                    "1989", "Bioshock", "Gamecube", "Street%20Fighter",
+                    "Red", "Double%20Dragon", "16", "Link", "Saturn",
+                    "PlayStation", "Goldeneye", "Far%20Cry"
                   ]
 
 // view engine setup
@@ -30,7 +31,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-app.use("/testAPI", testAPIRouter);
+app.use("/answer", answerRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -48,9 +49,8 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-// app.listen("?answer=", function(req, res, next) {
-//   console.log('testing testing');
-//   res.send("TESTING TESTING");
-// });
+app.listen(port);
+
+console.log('todo list RESTful API server started on: ' + port);
 
 module.exports = app;

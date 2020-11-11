@@ -28,7 +28,6 @@ class Deck {
 			while(posA == posB) {
 				posB = Math.floor(Math.random() * this.cards.length)
 			}
-
 			// give 'er the old bait n' switch
 			this.cards[posA] = this.cards[posB];
 			this.cards[posB] = tempCard;
@@ -50,7 +49,6 @@ class Player {
 		this.hand = [],
 		this.points = 0;
 	}
-
 	sortHand() {
 		// define suit priority
 		const suitGuide = {
@@ -164,4 +162,3 @@ ${winner.name} has won with ${winner.points} points!
 let newGame = new Game;
 newGame.start();
 newGame.end();
-// and maybe add inputs for console?

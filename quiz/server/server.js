@@ -1,45 +1,31 @@
-// server/server.js
-const express = require('express');
-// const router = express.Router()
-const app = express();
-const port = 8000;
-
-app.use(express.urlencoded({ extended: true }));
-
-// mock data to send to our frontend
-let events = 
-[
-  {
-    id: 1,
-    name: 'Pee'
-  },
-  {
-    id: 2,
-    name: 'Poop'
-  }
-];
-
-
-
-app.get('/events/:id', (req, res) => {
-
-  console.log('user connected');
-  // console.log(req._parsedUrl.path); // "/events/1"
-
-  const id = Number(req.params.id);
-  const event = events.find(event => event.id === id);
+// server.js File 
+const express = require('express'); // Importing express module 
+var cors = require("cors");
   
-  res.send(event);
+const app = express(); // Creating an express object 
+const port = 8000;  // Setting an port for this application
 
-});
+app.use(cors());
 
-app.get('/events', (req, res) => {
-  res.send(events);
-});
+const answerKey = [
+	"1989", "Bioshock", "Gamecube", "Street%20Fighter",
+	"Red", "Double%20Dragon", "16", "Link", "Saturn",
+	"PlayStation", "Goldeneye", "Far%20Cry"
+]
+  
+// Starting server using listen function 
+app.listen(port, function (err) { 
+   if(err){ 
+       console.log("Error while starting server"); 
+   } 
+   else{ 
+       console.log("Server has been started at "+port); 
+   } 
+}) 
 
-app.get('/', (req, res) => {
-  res.send(`Hi! Server is listening on port ${port}`)
-});
-
-// listen on the port
-app.listen(port);
+// listen for get in base directory
+app.get('/:name', function (req, res) {
+	let searchName = answerKey.filter(e => e == req.params.name);
+	
+	res.send(searchName);
+})
